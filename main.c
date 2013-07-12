@@ -37,13 +37,21 @@ int main(int ac, char **av) {
 		usage();
 
 	if(flaginfo && serverid) {
-		fprintf(stdout, "%s\n.: %ld information :.\n%s\n", LINE_SEPARATOR, serverid, LINE_SEPARATOR);
 		server_t *srv = NULL;
 		if(NULL == (srv = newsrv(tocken, serverid))) {
 			fprintf(stderr, "error: can't init srv pointer :(\n");
 			return EXIT_FAILURE;
 		}
-		fprintf(stdout, "hostname: %s\npower: %s\n", srv->hostname, srv->power);
+		fprintf(stdout, "--- SRV Information ---\nid: %d\nhostname: %s\npower: %s\nos: %s\nversion: %s\n", srv->id, srv->hostname, srv->power,
+															srv->os->name,
+															srv->os->version);
+		fprintf(stdout, "--- DC location ---\nroom:%s zone:%s line:%d rack:%d block:%s position:%d\n", 
+																			srv->location->room, 
+																			srv->location->zone,
+																			srv->location->line,
+																			srv->location->rack,
+																			srv->location->block,
+																			srv->location->position);
 	}
 
 	return EXIT_SUCCESS;

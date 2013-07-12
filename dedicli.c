@@ -37,23 +37,35 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
 }
 
 server_t *newsrv(char *tocken, int serverid) {
+	// dedicli
 	server_t *srv = NULL;
+	os_t *os = NULL;
+	location_t *location = NULL;
+	// curl
+	CURL *curl = NULL;
+	CURLcode res;
 	char *httpheaderauth = NULL;
 	char *url = NULL;
-	size_t httpheaderauthlength = strlen("Authorization: Bearer ") + strlen(tocken) + 1;
-	size_t urllength = strlen("/server/info/") + strlen(BASE_URL) + 5; // 5 == serverid len + 1
+	struct curl_slist *httpheaderparams = NULL;
+	size_t httpheaderauthlength = 0; 
+	size_t urllength = 0; 
 	struct string jsonrest;
 	// jansson
 	json_t *json = NULL;
 	json_error_t jsonError;
 
-	// curl
-	CURL *curl = NULL;
-	struct curl_slist *httpheaderparams = NULL;
-	CURLcode res;
-
 	// init party !
+	httpheaderauthlength = strlen("Authorization: Bearer ") + strlen(tocken) + 1;
+	urllength = strlen("/server/info/") + strlen(BASE_URL) + 5; // 5 == serverid len + 1 (gruick)
+	init_string(&jsonrest);
+
 	if(NULL == (srv = (server_t *) malloc(sizeof(server_t))))
+		return NULL;
+
+	if(NULL == (os = (os_t *) malloc(sizeof(os_t))))
+		return NULL;
+
+	if(NULL == (location = (location_t *) malloc(sizeof(location_t))))
 		return NULL;
 
 	if(NULL == (curl = curl_easy_init())) 
@@ -74,8 +86,6 @@ server_t *newsrv(char *tocken, int serverid) {
 	if(NULL == (json = malloc(sizeof(json))))
         return NULL;
 
-	init_string(&jsonrest);
-
 	// make url
 	sprintf(url, "%s%s%d", BASE_URL, "/server/info/", serverid);
 
@@ -89,7 +99,7 @@ server_t *newsrv(char *tocken, int serverid) {
 
 	res = curl_easy_setopt(curl, CURLOPT_URL, url);
 	res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, httpheaderparams);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+	res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
 	res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &jsonrest);
 
 	res = curl_easy_perform(curl);
@@ -111,8 +121,23 @@ server_t *newsrv(char *tocken, int serverid) {
 		return NULL;
 	}
 
+	srv->id = serverid;
 	srv->hostname = strdup(json_string_value(json_object_get(json, "hostname")));
 	srv->power = strdup(json_string_value(json_object_get(json, "power")));
+	// os
+	os->name = strdup(json_string_value(json_object_get(json_object_get(json, "os"), "name")));
+	os->version = strdup(json_string_value(json_object_get(json_object_get(json, "os"), "version")));
+	srv->os = os;
+	// location_t
+	location->datacenter = strdup(json_string_value(json_object_get(json_object_get(json, "location"), "datacenter")));	
+	location->room = strdup(json_string_value(json_object_get(json_object_get(json, "location"), "room")));	
+	location->zone = strdup(json_string_value(json_object_get(json_object_get(json, "location"), "zone")));	
+
+	location->line = json_integer_value(json_object_get(json_object_get(json, "location"), "line"));	
+	location->rack = json_integer_value(json_object_get(json_object_get(json, "location"), "rack"));	
+	location->block = strdup(json_string_value(json_object_get(json_object_get(json, "location"), "block")));	
+	location->position = json_integer_value(json_object_get(json_object_get(json, "location"), "position"));	
+	srv->location = location;
 
 	// free party ! 
     curl_easy_cleanup(curl);
@@ -124,3 +149,5 @@ server_t *newsrv(char *tocken, int serverid) {
 
 	return srv;
 }
+
+// make freesrv(server_t *srv)
