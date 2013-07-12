@@ -54,7 +54,7 @@ typedef struct rescue_credentials_s rescue_credentials_t;
 
 struct server_s {
 	int id;
-	char *hostname;
+	const char *hostname;
 	os_t *os;
 	char *power;
 	char *boot_mode;
@@ -75,12 +75,51 @@ typedef struct server_s server_t;
  * === start prog ===
  */
 
+/*
+ * copie curl rest reslut to variable : http://stackoverflow.com/questions/2329571/c-libcurl-get-output-into-a-string
+ */
+struct string {
+	char *ptr;
+	size_t len;
+};
+
+void init_string(struct string *s) {
+	s->len = 0;
+	s->ptr = malloc(s->len+1);
+	if (s->ptr == NULL) {
+		fprintf(stderr, "malloc() failed\n");
+		exit(EXIT_FAILURE);
+	}
+	s->ptr[0] = '\0';
+}
+
+size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
+{
+	size_t new_len = s->len + size*nmemb;
+	s->ptr = realloc(s->ptr, new_len+1);
+	if (s->ptr == NULL) {
+		fprintf(stderr, "realloc() failed\n");
+		exit(EXIT_FAILURE);
+	}
+	memcpy(s->ptr+s->len, ptr, size*nmemb);
+	s->ptr[new_len] = '\0';
+	s->len = new_len;
+
+	return size*nmemb;
+}
+
 server_t *newsrv(char *tocken, int serverid) {
 	server_t *srv = NULL;
 	char *httpheaderauth = NULL;
 	char *url = NULL;
 	size_t httpheaderauthlength = strlen("Authorization: Bearer ") + strlen(tocken) + 1;
 	size_t urllength = strlen("/server/info/") + strlen(BASE_URL) + 5; // 5 == serverid len + 1
+	struct string jsonrest;
+	// jansson
+	json_t *json = NULL;
+	json_error_t jsonError;
+
+	// curl
 	CURL *curl = NULL;
 	struct curl_slist *httpheaderparams = NULL;
 	CURLcode res;
@@ -104,6 +143,11 @@ server_t *newsrv(char *tocken, int serverid) {
 	if(NULL == (url = (char *) malloc(sizeof(char) * urllength)))
 		return NULL;
 
+	if(NULL == (json = malloc(sizeof(json))))
+        return NULL;
+
+	init_string(&jsonrest);
+
 	// make url
 	sprintf(url, "%s%s%d", BASE_URL, "/server/info/", serverid);
 
@@ -113,15 +157,33 @@ server_t *newsrv(char *tocken, int serverid) {
 	if(NULL == (httpheaderparams = curl_slist_append(httpheaderparams, httpheaderauth)))
 		return NULL;
 
-	fprintf(stdout, "%s - %s\n", url, httpheaderauth);
+	// fprintf(stdout, "%s - %s\n", url, httpheaderauth);
 
-	curl_easy_setopt(curl, CURLOPT_URL, url);
+	res = curl_easy_setopt(curl, CURLOPT_URL, url);
 	res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, httpheaderparams);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+	res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &jsonrest);
+
 	res = curl_easy_perform(curl);
 
-	if(res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
+	if(res != CURLE_OK) {
+		fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+		return NULL;
+	}
+
+	// fprintf(stdout, "json : %s\n", jsonrest.ptr);
+
+	// json_t *json_loads(const char *input, size_t flags, json_error_t *error)
+    json = json_loads(jsonrest.ptr, 0, &jsonError);
+	if(!json) {
+		fprintf(stderr, "error: %s line : %d column : %d [%s]\n", jsonError.source, 
+                                                                    jsonError.line, 
+                                                                    jsonError.column, 
+                                                                    jsonError.text);
+		return NULL;
+	}
+
+	srv->hostname = strdup(json_string_value(json_object_get(json, "hostname")));
 
 	// free party ! 
     curl_easy_cleanup(curl);
@@ -174,6 +236,7 @@ int main(int ac, char **av) {
 			fprintf(stderr, "error: can't init srv pointer :(\n");
 			return EXIT_FAILURE;
 		}
+		fprintf(stdout, "hostname: %s\n", srv->hostname);
 	}
 
 	return EXIT_SUCCESS;
