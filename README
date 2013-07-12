@@ -1,6 +1,6 @@
 Simple commande line for manage your dedibox.
 
-_ Exemple _
+_Exemple_
 
 	./dedicli -t xxxxxxxxxxxxxxxxxxxxxxxxxxxxx -s 28XXX -i
 	----------------------------------------
