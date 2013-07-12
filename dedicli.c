@@ -184,6 +184,7 @@ server_t *newsrv(char *tocken, int serverid) {
 	}
 
 	srv->hostname = strdup(json_string_value(json_object_get(json, "hostname")));
+	srv->power = strdup(json_string_value(json_object_get(json, "power")));
 
 	// free party ! 
     curl_easy_cleanup(curl);
@@ -236,7 +237,7 @@ int main(int ac, char **av) {
 			fprintf(stderr, "error: can't init srv pointer :(\n");
 			return EXIT_FAILURE;
 		}
-		fprintf(stdout, "hostname: %s\n", srv->hostname);
+		fprintf(stdout, "hostname: %s\npower: %s\n", srv->hostname, srv->power);
 	}
 
 	return EXIT_SUCCESS;

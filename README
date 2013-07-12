@@ -1,1 +1,12 @@
 Simple commande line for manage your dedibox.
+
+_ Exemple _
+
+```
+./dedicli -t xxxxxxxxxxxxxxxxxxxxxxxxxxxxx -s 28XXX -i
+----------------------------------------
+.: 28XXX information :.
+----------------------------------------
+hostname: awaks
+power: ON
+```
