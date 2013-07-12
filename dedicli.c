@@ -36,7 +36,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
 	return size*nmemb;
 }
 
-server_t *newsrv(char *tocken, int serverid) {
+server_t *newsrv(char *token, int serverid) {
 	// dedicli
 	server_t *srv = NULL;
 	os_t *os = NULL;
@@ -55,7 +55,7 @@ server_t *newsrv(char *tocken, int serverid) {
 	json_error_t jsonError;
 
 	// init party !
-	httpheaderauthlength = strlen("Authorization: Bearer ") + strlen(tocken) + 1;
+	httpheaderauthlength = strlen("Authorization: Bearer ") + strlen(token) + 1;
 	urllength = strlen("/server/info/") + strlen(BASE_URL) + 5; // 5 == serverid len + 1 (gruick)
 	init_string(&jsonrest);
 
@@ -77,7 +77,7 @@ server_t *newsrv(char *tocken, int serverid) {
 	if(NULL == (httpheaderauth = strcpy(httpheaderauth, "Authorization: Bearer ")))
 		return NULL;
 
-	if(NULL == (strncat(httpheaderauth, tocken, httpheaderauthlength)))
+	if(NULL == (strncat(httpheaderauth, token, httpheaderauthlength)))
 		return NULL;
 
 	if(NULL == (url = (char *) malloc(sizeof(char) * urllength)))

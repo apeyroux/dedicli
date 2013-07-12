@@ -6,7 +6,7 @@
 #include "dedicli.h"
 
 void usage() {
-	fprintf(stdout, "usage: -t tocken -s srvid [-i (information)]\n");
+	fprintf(stdout, "usage: -t token -s srvid [-i (information)]\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -15,12 +15,12 @@ int main(int ac, char **av) {
 	int ch = 0;
 	int flaginfo = 0;
 	unsigned long serverid = 0;
-	char *tocken = NULL;
+	char *token = NULL;
 
 	while(-1 != (ch = getopt(ac, av, "t:s:i"))) {
 		switch(ch) {
 			case 't':
-				tocken = strdup(optarg);
+				token = strdup(optarg);
 				break;
 			case 's':
 				serverid = strtoul(optarg, NULL, 10);
@@ -33,12 +33,12 @@ int main(int ac, char **av) {
 		}
 	}
 
-	if(NULL == tocken)
+	if(NULL == token)
 		usage();
 
 	if(flaginfo && serverid) {
 		server_t *srv = NULL;
-		if(NULL == (srv = newsrv(tocken, serverid))) {
+		if(NULL == (srv = newsrv(token, serverid))) {
 			fprintf(stderr, "error: can't init srv pointer :(\n");
 			return EXIT_FAILURE;
 		}

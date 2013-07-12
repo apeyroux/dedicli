@@ -73,4 +73,4 @@ struct string {
 
 void init_string(struct string *s);
 size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s);
-server_t *newsrv(char *tocken, int serverid);
+server_t *newsrv(char *token, int serverid);
