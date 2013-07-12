@@ -6,83 +6,11 @@
 #include <jansson.h>
 #include <curl/curl.h>
 
-#define BASE_URL "https://api.online.net/api/v1"
-#define LINE_SEPARATOR "----------------------------------------"
-
-struct os_s {
-	char *name;
-	char *version;
-};
-
-typedef struct os_s os_t;
-
-struct location_s {
-	char *datacenter;
-	char *room;
-	char *zone;
-	int line;
-	int rack;
-	char *block;
-	int position;
-};
-
-typedef struct location_s location_t;
-
-struct network_s {
-	char **ip;
-	char **private;
-	char **ipfo;
-};
-
-typedef struct network_s network_t;
-
-enum privilege { OWNER, TECH };
-struct privileges_s {
-	enum privilege **privileges;	
-};
-
-typedef struct privilege_s privilege_t;
-
-struct rescue_credentials_s {
-	char *login;
-	char *password;
-	char *protocol;
-	char *ip;
-};
-
-typedef struct rescue_credentials_s rescue_credentials_t;
-
-struct server_s {
-	int id;
-	const char *hostname;
-	os_t *os;
-	char *power;
-	char *boot_mode;
-	// date last_reboot
-	bool anti_ddos;
-	bool proactive_monitoring;
-	char *support;
-	char *abuse;
-	location_t *location;
-	network_t *network;
-	privilege_t *privileges;
-	rescue_credentials_t *rescue_credentials;
-};
-
-typedef struct server_s server_t;
-
-/*
- * === start prog ===
- */
+#include "dedicli.h"
 
 /*
  * copie curl rest reslut to variable : http://stackoverflow.com/questions/2329571/c-libcurl-get-output-into-a-string
  */
-struct string {
-	char *ptr;
-	size_t len;
-};
-
 void init_string(struct string *s) {
 	s->len = 0;
 	s->ptr = malloc(s->len+1);
@@ -195,50 +123,4 @@ server_t *newsrv(char *tocken, int serverid) {
 	url = NULL;
 
 	return srv;
-}
-
-server_t *newsrv(char *tocken, int serverid);
-
-void usage() {
-	fprintf(stdout, "usage: -t tocken -s srvid [-i (information)]\n");
-	exit(EXIT_SUCCESS);
-}
-
-int main(int ac, char **av) {
-
-	int ch = 0;
-	int flaginfo = 0;
-	unsigned long serverid = 0;
-	char *tocken = NULL;
-
-	while(-1 != (ch = getopt(ac, av, "t:s:i"))) {
-		switch(ch) {
-			case 't':
-				tocken = strdup(optarg);
-				break;
-			case 's':
-				serverid = strtoul(optarg, NULL, 10);
-				break;
-			case 'i':
-				flaginfo = 1;
-				break;
-			default:
-				usage();
-		}
-	}
-
-	if(NULL == tocken)
-		usage();
-
-	if(flaginfo && serverid) {
-		fprintf(stdout, "%s\n.: %ld information :.\n%s\n", LINE_SEPARATOR, serverid, LINE_SEPARATOR);
-		server_t *srv = NULL;
-		if(NULL == (srv = newsrv(tocken, serverid))) {
-			fprintf(stderr, "error: can't init srv pointer :(\n");
-			return EXIT_FAILURE;
-		}
-		fprintf(stdout, "hostname: %s\npower: %s\n", srv->hostname, srv->power);
-	}
-
-	return EXIT_SUCCESS;
 }
