@@ -1,3 +1,5 @@
+/!\ This is a poc, be indulgent, is 1 hour of work. /!\
+
 Simple commande line for manage your dedibox.
 
 __Exemple__
@@ -8,3 +10,5 @@ __Exemple__
 	----------------------------------------
 	hostname: awaks
 	power: ON
+
+You need libcurl for rest requests and jansson for json.
